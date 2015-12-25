@@ -1,41 +1,39 @@
-package nook.collections;
+package nook.ds;
 
-class AATree<K,V> {
+class Dict<K,V> {
 	public var key(default,null): K;
 	public var value(default,null): V;
-	public var left(default,null): AATree<K,V>;
-	public var right(default,null): AATree<K,V>;
+	public var left(default,null): Dict<K,V>;
+	public var right(default,null): Dict<K,V>;
 	public var level(default,null): Int;
 
-	static public function compare<K>( a: K, b: K ) {
+	public static function compare<K>( a: K, b: K ) {
 		return Reflect.compare( a, b );
 	}
 
-	public inline function set( k: K, v: V ) return recSet( this, k, v );
-	public inline function get( k: K ) return recGet( this, k );		
-	public inline function remove( k: K ) return recRemove( this, k );
-	public inline function map<T>( f: K->V->T ) return recMap( this, f );
-	public inline function filter( p: K->V->Bool ) return recFilter( this, p );
-	public inline function foldl<T>( f: K->V->T->T, acc: T ) return recFoldl( this, f, acc );
-	public inline function foldr<T>( f: K->V->T->T, acc: T ) return recFoldr( this, f, acc );
-	public inline function each( f: K->V->Void ) recEach( this, f );
-	public inline function length() return recLength( this );
-	public inline function height() return recHeight( this );
-	public inline function count( p: K->V->Bool ) return recCount( this, p );
-	
-	static inline function newNode<K,V>( key: K, value: V, left: AATree<K,V>, right: AATree<K,V>, level: Int ) {
-		var self = new AATree<K,V>( key, value);
+	static inline function newNode<K,V>( key: K, value: V, left: Dict<K,V>, right: Dict<K,V>, level: Int ) {
+		var self = new Dict<K,V>( key, value);
 		self.left = left;
 		self.right = right;
 		self.level = level;
 		return self;
 	}
-
-	public static function fromMap<K1,V1>( m: Map<K1,V1>, ?out: AATree<K1,V1> ) {
-		for ( k in m.keys()) {
-			out = recSet( out, k, m[k] );
+	
+	public static macro function toMap<K,V>( bst: ExprOf<Dict<K,V>>) {
+		return macro {
+			foldl( $bst, new Map(), function( k, v, acc ) { acc[k] = v; return acc; } );
 		}
-		return out;
+	}
+
+	public static function toList<K,V>( bst: Dict<K,V> ) {
+		return foldl( bst, List.ListAdt.Nil, function( k, v, acc ) return List.cons( new Pair<K,V>(k,v), acc ));
+	}
+
+	public static function toDict<K,V>( m: Map<K,V>, ?bst: Dict<K,V> ) {
+		for ( k in m.keys()) {
+			bst = set( bst, k, m[k] );
+		}
+		return bst;
 	}
 	
 	public inline function new( key: K, value: V ) {
@@ -46,7 +44,7 @@ class AATree<K,V> {
 		this.level = 1;
 	}
 
-	static inline function skew<K,V>( bst: AATree<K,V> ) {
+	static inline function skew<K,V>( bst: Dict<K,V> ) {
 		if ( bst != null ) {
 			var lbst = bst.left;
 			if ( lbst != null ) {
@@ -61,7 +59,7 @@ class AATree<K,V> {
 		return bst;
 	}
 
-	static inline function split<K,V>( bst: AATree<K,V> ) {
+	static inline function split<K,V>( bst: Dict<K,V> ) {
 		if ( bst != null ) {
 			var rbst = bst.right;
 			if ( rbst != null ) {
@@ -79,28 +77,28 @@ class AATree<K,V> {
 		return bst;
 	}
 
-	static inline function rebalanceSet<K,V>( bst: AATree<K,V>) {
+	static inline function rebalanceSet<K,V>( bst: Dict<K,V>) {
 		return split( skew( bst ));
 	}
 
-	static function recSet<K,V>( bst: AATree<K,V>, k: K, v: V ) {
+	public static function set<K,V>( bst: Dict<K,V>, k: K, v: V ) {
 		if ( bst == null ) {
-			return new AATree<K,V>( k, v );
+			return new Dict<K,V>( k, v );
 		} else {
 			var cmp = compare( k, bst.key );
 			if ( cmp == 0 ) {
 				return newNode( bst.key, v, bst.left, bst.right, bst.level );
 			} else if ( cmp < 0 ) {
-				var rbst = recSet( bst.right, k, v );
+				var rbst = set( bst.right, k, v );
 				return rebalanceSet( newNode( bst.key, bst.value, bst.left, rbst, bst.level ));
 			} else {
-				var lbst = recSet( bst.left, k, v );
+				var lbst = set( bst.left, k, v );
 				return rebalanceSet( newNode( bst.key, bst.value, lbst, bst.right, bst.level ));
 			}
 		}
 	}
 
-	static function recGet<K,V>( bst: AATree<K,V>, k: K ) {
+	public static function get<K,V>( bst: Dict<K,V>, k: K ) {
 		if ( bst == null ) {
 			return null;
 		} else {
@@ -108,14 +106,18 @@ class AATree<K,V> {
 			if ( cmp == 0 ) {
 				return bst.value;
 			} else if ( cmp < 0 ) {
-				return recGet( bst.left, k );
+				return get( bst.left, k );
 			} else {
-				return recGet( bst.right, k );
+				return get( bst.right, k );
 			}
 		}
 	}
 
-	static inline function predecessor<K,V>( bst: AATree<K,V> ) {
+	public static inline function exists<K,V>( bst: Dict<K,V>, k: K ) {
+		return get( bst, k ) != null;
+	}
+
+	static inline function predecessor<K,V>( bst: Dict<K,V> ) {
 		bst = bst.left;
 		while ( bst.right != null ) {
 			bst = bst.right;
@@ -123,7 +125,7 @@ class AATree<K,V> {
 		return bst;
 	}
 
-	static inline function successor<K,V>( bst: AATree<K,V> ) {
+	static inline function successor<K,V>( bst: Dict<K,V> ) {
 		bst = bst.right;
 		while ( bst.left != null ) {
 			bst = bst.left;
@@ -139,7 +141,7 @@ class AATree<K,V> {
 		return a > b ? a : b;
 	}
 
-	static inline function decrease<K,V>( bst: AATree<K,V> ) {
+	static inline function decrease<K,V>( bst: Dict<K,V> ) {
 		var shouldbe = min( bst.left.level, bst.right.level + 1 );
 		if ( shouldbe < bst.level ) {
 			return newNode( bst.key, bst.value, bst.left, bst.right, shouldbe );
@@ -151,7 +153,7 @@ class AATree<K,V> {
 		}
 	}	
 
-	static inline function rebalanceRemove<K,V>( bst: AATree<K,V> ) {
+	static inline function rebalanceRemove<K,V>( bst: Dict<K,V> ) {
 		var bst1 = skew( decrease( bst ));
 		var bst2 = newNode( bst1.key, bst1.value, bst1.left, skew( bst1.right ), bst1.level );
 		var bst3 = if ( bst2 != null ) {
@@ -164,7 +166,7 @@ class AATree<K,V> {
 		return newNode( bst3.key, bst3.value, bst3.left, split( bst3.right ), bst3.level );
 	}
 
-	static function recRemove<K,V>( bst: AATree<K,V>, k: K ) {
+	public static function remove<K,V>( bst: Dict<K,V>, k: K ) {
 		if ( bst != null ) {
 			var cmp = compare( k, bst.key );
 			if ( cmp == 0 ) {
@@ -173,88 +175,94 @@ class AATree<K,V> {
 				} else {
 					if ( bst.left == null ) {
 						var succ = successor( bst );
-						var rbst = recRemove( bst.right, succ.key );
+						var rbst = remove( bst.right, succ.key );
 						return newNode( succ.key, succ.value, null, rbst, bst.level );
 					} else {
 						var pred = predecessor( bst );
-						var lbst = recRemove( bst.left, pred.key );
+						var lbst = remove( bst.left, pred.key );
 						return newNode( pred.key, pred.value, lbst, bst.right, bst.level );
 					}
 				}
 			} else if ( cmp < 0 ) {
-				return rebalanceRemove( newNode( bst.key, bst.value, recRemove( bst.left, bst.key ), bst.right, bst.level ));
+				return rebalanceRemove( newNode( bst.key, bst.value, remove( bst.left, bst.key ), bst.right, bst.level ));
 			} else {
-				return rebalanceRemove( newNode( bst.key, bst.value, bst.left, recRemove( bst.right, bst.key ), bst.level ));
+				return rebalanceRemove( newNode( bst.key, bst.value, bst.left, remove( bst.right, bst.key ), bst.level ));
 			}
 		}
 		return bst;
 	}
 
-	static function recMap<K,V,T>( bst: AATree<K,V>, f: K->V->T ): AATree<K,T> {
+	public static function map<K,V,T>( bst: Dict<K,V>, f: K->V->T ): Dict<K,T> {
 		if ( bst != null ) {
-			return newNode( bst.key, f( bst.key, bst.value ), recMap( bst.left, f ), recMap( bst.right, f ), bst.level );
+			return newNode( bst.key, f( bst.key, bst.value ), map( bst.left, f ), map( bst.right, f ), bst.level );
 		} else {
 			return null;
 		}
 	}
 	
-	static function recLength<K,V>( bst: AATree<K,V> ) {
+	public static function length<K,V>( bst: Dict<K,V> ) {
 		if ( bst == null ) {
 			return 0;
 		} else {
-			return 1 + recLength( bst.left ) + recLength( bst.right );
+			return 1 + length( bst.left ) + length( bst.right );
 		}
 	}
 	
-	static function recHeight<K,V>( bst: AATree<K,V> ) {
+	public static function height<K,V>( bst: Dict<K,V> ) {
 		if ( bst == null ) {
 			return 0;
 		} else {
-			return 1 + max( recHeight( bst.left ), recHeight( bst.right ));
+			return 1 + max( height( bst.left ), height( bst.right ));
 		}
 	}
 
-	static function recEach<K,V>( bst: AATree<K,V>, f: K->V->Void ) {
+	public static function each<K,V>( bst: Dict<K,V>, f: K->V->Void ) {
 		if ( bst != null ) {
-			recEach( bst.left, f );
+			each( bst.left, f );
 			f( bst.key, bst.value );
-			recEach( bst.right, f );
+			each( bst.right, f );
 		}
 	}
 
-	static function recFilter<K,V>( bst: AATree<K,V>, p: K->V->Bool ) {
+	public static function filter<K,V>( bst: Dict<K,V>, p: K->V->Bool ) {
 		if ( bst != null ) {
 			if ( p( bst.key, bst.value )) {
-				return newNode( bst.key, bst.value, recFilter( bst.left, p ), recFilter( bst.right, p ), bst.level );
+				return newNode( bst.key, bst.value, filter( bst.left, p ), filter( bst.right, p ), bst.level );
 			} else {
-				return recFilter( recRemove( bst, bst.key ), p );
+				return filter( remove( bst, bst.key ), p );
 			}
 		} else {
 			return null;
 		}
 	}
 
-	static function recFoldl<K,V,T>( bst: AATree<K,V>, f: K->V->T->T, acc: T ) {
+	public static function foldl<K,V,T>( bst: Dict<K,V>, acc: T, f: K->V->T->T ) {
 		if ( bst != null ) {
-			return recFoldl( bst.right, f, recFoldl( bst.left, f, f( bst.key, bst.value, acc )));
+			return foldl( bst.right, foldl( bst.left, f( bst.key, bst.value, acc ), f), f);
 		} else {
 			return acc;
 		}
 	}
 
-	static function recFoldr<K,V,T>( bst: AATree<K,V>, f: K->V->T->T, acc: T ) {
+	public static function foldr<K,V,T>( bst: Dict<K,V>, acc: T, f: K->V->T->T ) {
 		if ( bst != null ) {
-			return recFoldr( bst.left, f, recFoldr( bst.right, f, f( bst.key, bst.value, acc )));
+			return foldr( bst.left, foldr( bst.right, f( bst.key, bst.value, acc ), f), f );
 		} else {
 			return acc;
 		}
 	}
 
-	static function recCount<K,V>( bst: AATree<K,V>, p: K->V->Bool ) {
+	public static function count<K,V>( bst: Dict<K,V>, p: K->V->Bool ) {
 		if ( bst != null ) {
-			return (p( bst.key, bst.value ) ? 1 : 0) + recCount( bst.left, p ) + recCount( bst.right, p );
+			return (p( bst.key, bst.value ) ? 1 : 0) + count( bst.left, p ) + count( bst.right, p );
 		} else {
 			return 0;
 		}
+	}
+
+	public static function merge<K,V>( bst1: Dict<K,V>, bst2: Dict<K,V> ) {
+		var bst = bst1;
+		each( bst2, function( k, v ) bst = set( bst, k, v ));
+		return bst;
 	}
 }
