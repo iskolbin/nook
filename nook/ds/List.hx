@@ -9,9 +9,9 @@ class List<T> {
 	public static inline function cons<T>( head: T, tail: ListAdt<T> ) return Cons( head, tail );
 	public static inline function car<T>( lst: ListAdt<T> ) return switch ( lst ) { case Cons(head,_): head; case Nil: throw "Empty list";}
 	public static inline function cdr<T>( lst: ListAdt<T> ) return switch ( lst ) { case Cons(_,tail): tail; case Nil: throw "Empty list";}
-	public static inline function isNil<T>( lst: ListAdt<T> ) return lst == Nil;
 	public static inline function cddr<T>( lst: ListAdt<T> ) return cdr( cdr( lst ));
 	public static inline function cadr<T>( lst: ListAdt<T> ) return car( cdr( lst ));
+	public static inline function isNil<T>( lst: ListAdt<T> ) return lst == Nil;
 
 	public static function toList<T>( it: Iterable<T> ) {
 		var lst = Nil;
@@ -21,13 +21,13 @@ class List<T> {
 		return reverse( lst );
 	}
 
-	static function pushToArray<T>( value: T, array: Array<T> ): Array<T> {
-		array.push( value );
-		return array;
-	}
-
 	public static function toArray<T>( lst: ListAdt<T> ): Array<T> {	
-		return foldr( lst, [], pushToArray );
+		function pushToArray<T>( value: T, array: Array<T> ): Array<T> {
+			array.push( value );
+			return array;
+		}
+
+		return foldl( lst, [], pushToArray );
 	}
 
 	public static function get<T>( lst: ListAdt<T>, index: Int ) return switch( lst ) {
@@ -46,7 +46,7 @@ class List<T> {
 	public static function remove<T>( lst: ListAdt<T>, value: T ) return switch( lst ) {
 		case Cons(head,tail) if ( head == value ): remove( tail, value );
 		case Cons(head,tail): Cons(head,remove( tail, value ));
-		case Nil: throw "Empty list";	
+		case Nil: Nil;
 	}
 
 	public static function map<T,V>( lst: ListAdt<T>, f: T->V ) return switch( lst ) {
@@ -62,7 +62,7 @@ class List<T> {
 
 	public static function foldl<T,V>( lst: ListAdt<T>, acc: V, f: T->V->V ) return switch( lst ){
 		case Cons(head,tail): foldl( tail, f( head, acc ), f );
-		case Nil: Nil;
+		case Nil: acc;
 	}
 
 	public static function foldr<T,V>( lst: ListAdt<T>, acc: V, f: T->V->V ) {
@@ -80,13 +80,13 @@ class List<T> {
 	}
 
 	public static function tail<T>( lst: ListAdt<T>, index: Int ) return switch( lst ) {
-		case Cons(_) | Nil if ( index <= 0 ): Nil;
-		case Cons(head,tail_): Cons(head,tail( tail_, index - 1 ));
-		case Nil: throw "Empty list"; 
+		case _ if ( index <= 0 ): lst;
+		case Cons(_,tail_): tail( tail_, index - 1 );
+		case Nil: throw "Empty list";
 	}
 
 	public static function unique<T>( lst: ListAdt<T>, checked: Dict<T,Bool> = null ) return switch( lst ) {
-		case Cons(head,tail) if ( !Dict.exists( checked, head )): Cons(head,unique( tail, Dict.set( checked, head, true )));
+		case Cons(head,tail) if ( !Dict.exists( checked, head )): trace( checked, Dict.exists( checked, head ) ); Cons(head,unique( tail, Dict.set( checked, head, true )));
 		case Cons(head,tail): unique( tail, checked );
 		case Nil: Nil;
 	}

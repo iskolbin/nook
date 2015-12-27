@@ -1,11 +1,15 @@
 package nook.ds;
 
-class Pair<F,S> {
-	public var first: F;
-	public var second: S;
+class Pair<A,B> {
+	public var a(default,null): A;
+	public var b(default,null): B;
 
-	public inline function new( first: F, second: S ) {
-		this.first = first;
-		this.second = second;
+	public inline function new( a: A, b: B ) {
+		this.a = a;
+		this.b = b;
+	}
+
+	public function toString() {
+		return '($a . $b)';
 	}
 }
