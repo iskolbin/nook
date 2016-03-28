@@ -73,6 +73,12 @@ class List<T> {
 		return foldl( lst, Nil, cons );
 	}
 
+	public static function contains<T>( lst: ListAdt<T>, v: T ): Bool return switch ( lst ) {
+		case Cons(head,tail) if (head == v): true;
+		case Cons(_,tail): contains( tail, v );
+		case Nil: false;
+	}
+
 	public static function head<T>( lst: ListAdt<T>, index: Int ) return switch( lst ) {
 		case Cons(head_,tail) if ( index <= 0 ): Cons(head_,Nil);
 		case Cons(head_,tail): Cons(head_,head( tail, index - 1 ));
@@ -85,15 +91,20 @@ class List<T> {
 		case Nil: throw "Empty list";
 	}
 
-	public static function unique<T>( lst: ListAdt<T>, checked: Dict<T,Bool> = null ) return switch( lst ) {
-		case Cons(head,tail) if ( !Dict.exists( checked, head )): trace( checked, Dict.exists( checked, head ) ); Cons(head,unique( tail, Dict.set( checked, head, true )));
-		case Cons(head,tail): unique( tail, checked );
-		case Nil: Nil;
+	static function doUnique<T>( v: T, acc: ListAdt<T> ): ListAdt<T> {
+		return contains( acc, v ) ? acc : Cons( v, acc );
 	}
 
-	public static function partition<T>( lst: ListAdt<T>, p: T->Bool ) {
-		foldr( lst, new Pair( Nil, Nil ), function( v, acc ) {
-			return p( v ) ? new Pair(Cons(v,acc.first), acc.second) : new Pair(acc.first, Cons(v,acc.second));
-		});
+	public static function unique<T>( lst: ListAdt<T> ) {
+		return foldr( lst, Nil, doUnique );
+	}
+
+	static function doLength<T>( v: T, acc: Int ): Int {
+		acc++;
+		return acc;
+	}
+	
+	public static function length<T>( lst: ListAdt<T> ): Int {
+		return foldl( lst, 0, doLength );
 	}
 }

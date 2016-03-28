@@ -139,8 +139,29 @@ class Dict {
 		case Nil: false;
 	}
 
-	public static function toString<K,V>( dict: DictAdt<K,V>, ident: String = "" ) return switch (dict) {
-		case Nil: ident + "NIL";
-		case Tree(x,a,b,n): ident + 'T $x/$n\n${toString(a,ident+" ")}\n${toString(b,ident+" ")}'; 
+	static function doToString<K,V>( dict: DictAdt<K,V>, ident: String, buffer: StringBuf ): StringBuf {
+		switch ( dict ) {
+			case Nil: 
+				buffer.add( ident );
+				buffer.add( "()" );
+			case Tree(x,a,b,n):
+				buffer.add( ident );
+				buffer.add( "(" );
+				buffer.add( Std.string( x.a ));
+				buffer.add( " => " );
+				buffer.add( Std.string( x.b ));
+				buffer.add( ")\n" );
+				doToString( a, ident+" ", buffer );
+				buffer.add( "\n" );
+				doToString( b, ident+" ", buffer );
+		}
+		return buffer;
+	}
+
+	public static function toString<K,V>( dict: DictAdt<K,V>, ident: String = "" ) {
+		
+		return doToString( dict, "", new StringBuf()).toString();
+		//case Nil: ident + "NIL";
+		//case Tree(x,a,b,n): ident + 'T $x/$n\n${toString(a,ident+" ")}\n${toString(b,ident+" ")}'; 
 	}
 }
