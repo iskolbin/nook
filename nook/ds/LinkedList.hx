@@ -1,6 +1,6 @@
 package nook.ds;
 
-private class LinkedListNode<T> {	
+class LinkedListNode<T> {	
 	public var item: T;
 	public var prev: LinkedListNode<T>;
 	public var next: LinkedListNode<T>;
@@ -38,8 +38,8 @@ private class LinkedListReverseIterator<T> {
 
 class LinkedList<T> {
 	public var length(default,null): Int;
-	public var head: LinkedListNode<T> = null;
-	public var tail: LinkedListNode<T> = null;
+	public var head(default,null): LinkedListNode<T> = null;
+	public var tail(default,null): LinkedListNode<T> = null;
 
 	public function new( ?src: Iterable<T> = null ) {
 		head = null;
