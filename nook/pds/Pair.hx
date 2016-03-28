@@ -1,4 +1,4 @@
-package nook.ds;
+package nook.pds;
 
 class Pair<A,B> {
 	public var a(default,null): A;

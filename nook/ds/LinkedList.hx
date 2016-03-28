@@ -1,4 +1,4 @@
-package junge;
+package nook.ds;
 
 private class LinkedListNode<T> {	
 	public var item: T;
@@ -472,6 +472,18 @@ class LinkedList<T> {
 			result.push( item );
 		}
 		return result;
+	}
+
+	public function count( p: T-> Bool ): Int {
+		var n = 0;
+		var node = head;
+		while ( node != null ) {
+			if ( p( node.item )) {
+				n++;
+			}
+			node = node.next;
+		}
+		return n;
 	}
 
 	// Aliases

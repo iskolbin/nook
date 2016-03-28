@@ -1,4 +1,4 @@
-package nook.ds;
+package nook.pds;
 
 enum DictAdt<K,V> {
 	Tree( kv: Pair<K,V>, left: DictAdt<K,V>, right: DictAdt<K,V>, level: Int );

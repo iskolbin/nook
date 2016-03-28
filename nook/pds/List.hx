@@ -1,4 +1,4 @@
-package nook.ds;
+package nook.pds;
 
 enum ListAdt<T> {
 	Cons( head: T, tail: ListAdt<T> );

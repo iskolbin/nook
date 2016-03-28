@@ -1,4 +1,4 @@
-package junge;
+package nook.ds;
 
 class QuickList<T> {
 	var buckets: List<Array<T>>;
