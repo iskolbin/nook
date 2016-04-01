@@ -1,44 +1,57 @@
 package nook.ds;
 
+import nook.ds.LinkedList.LinkedListNode;
+
+@:access(nook.ds.LinkedList)
 class QuickList<T> {
-	var buckets: List<Array<T>>;
+	var buckets: LinkedList<Array<T>>;
 	public var length(default,null): Int;
 
 	public inline function new() {
-		buckets = new List<Array<T>>();
-		buckets.push( new Array<T>());
+		buckets = new LinkedList<Array<T>>();
 		length = 0;
 	}	
 
-	inline function split() {
-		var last = buckets.last();
-		if ( last.length >= 16 ) {
-			buckets.push( last.splice( 8, 8 ));
+	inline function splitBucket( bucket: LinkedListNode<Array<T>> ) {
+		if ( bucket.item.length >= 16 ) {
+			buckets.insertNode( bucket.item.splice( 8, 8 ), bucket, bucket.next );
 		}
 	}
 
-	inline function merge() {
-		var last 
-			if ( last.length() < 4 && buckets.length > 1 ) {
-				buckets.pop();
-				var prelast = buckets.last();
-				prelast.push( last[0] );
-				prelast.push( last[1] );
-				prelast.push( last[2] );
+	inline function mergeBucket( bucket: LinkedListNode<Array<T>> ) {
+		if ( bucket.item.length < 4 ) {
+			if ( bucket.prev != null ) {
+				for ( i in 0...bucket.item.length ) {
+					bucket.prev.item.push( bucket.item[i] );
+				}
+				buckets.removeNode( bucket );
+				splitBucket( bucket.prev );
+			} else if ( bucket.next != null ) {
+				for ( i in 0...bucket.next.item.length ) {
+					bucket.item.push( bucket.next.item[i] );			
+				}
+				buckets.removeNode( bucket.next );
+				splitBucket( bucket );
+			} else if ( bucket.item.length == 0 ) {
+				buckets.removeNode( bucket );
 			}
+		}
 	}
 
-	public inline function push( v: T ) {
-		var last = buckets.last();
-		last.push( v );
+	public inline function pushTail( v: T ) {
+		if ( length == 0 ) {
+			buckets.pushTail( [v] );
+		} else {	
+			buckets.tail.item.push( v );
+			splitBucket( buckets.tail );
+		}
 		length++;
-		split();
 	}
 
-	public inline function pop(): Null<T> {
+	public inline function popTail(): Null<T> {
 		if ( length > 0 ) {
-			var last = buckets.last();
-			var v = last.pop();
+			var v = buckets.tail.item.pop();
+			mergeBucket( buckets.tail );
 			length--;
 			return v;
 		} else {
@@ -47,6 +60,23 @@ class QuickList<T> {
 	}
 
 	public inline function pushHead( v: T ) {
-		var first = 
+		if ( length == 0 ) {
+			buckets.pushHead( [v] );
+		} else {	
+			buckets.head.item.unshift( v );
+			splitBucket( buckets.head );
+		}
+		length++;
+	}
+	
+	public inline function popHead(): Null<T> {
+		if ( length > 0 ) {
+			var v = buckets.head.item.shift();
+			mergeBucket( buckets.head );
+			length--;
+			return v;
+		} else {
+			return null;
+		}
 	}
 }
