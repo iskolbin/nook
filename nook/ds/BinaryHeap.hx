@@ -16,8 +16,12 @@ package nook.ds;
 
 class BinaryHeap<T: Heapable<T>> {
 	public var data(default,null): Array<T> = null;
-	public var length(default, null): Int = 0;
+	public var length(default,null): Int = 0;
 	
+	inline function div2( v: Int ): Int { 
+		return #if (cpp||java||cs) length >> 1 #else Std.int( length/2 ) #end;
+	}
+
 	inline function swap( index1, index2 ): Void {
 		var tmp = data[index1];
 		data[index1] = data[index2];
@@ -27,43 +31,43 @@ class BinaryHeap<T: Heapable<T>> {
 	}
 
 	inline function siftUp( index: Int ): Int {
-		var parentIndex = (index-1) >> 1;
+		var parentIndex = div2( index-1 );
 		while ( index > 0 && data[index].higherPriority( data[parentIndex] )) {
 			swap( index, parentIndex );
 			index = parentIndex;
-			parentIndex = (index-1) >> 1;	
+			parentIndex = div2( index-1 );	
 		}
 		return index;
 	}
 
 	inline function siftDownFloyd( index: Int ) {
-		var leftIndex = (index << 1) + 1;
+		var leftIndex = (index + index) + 1;
 		var rightIndex = leftIndex + 1;
 		while ( leftIndex < length ) {
 			var higherPriorityIndex = ( rightIndex < length && data[rightIndex].higherPriority( data[leftIndex] )) ? rightIndex : leftIndex;
 			swap( index, higherPriorityIndex );
 			index = higherPriorityIndex;
-			leftIndex = (index << 1) + 1;
+			leftIndex = (index + index) + 1;
 			rightIndex = leftIndex + 1;
 		}
 		siftUp( index );
 	}
 	
 	inline function siftDown( index: Int ) {
-		var leftIndex = (index << 1) + 1;
+		var leftIndex = (index + index) + 1;
 		var rightIndex = leftIndex + 1;
 		while ( leftIndex < length ) {
 			var higherPriorityIndex = ( rightIndex < length && data[rightIndex].higherPriority( data[leftIndex] )) ? rightIndex : leftIndex;
 			if ( data[index].higherPriority( data[higherPriorityIndex] )) break;
 			swap( index, higherPriorityIndex );
 			index = higherPriorityIndex;
-			leftIndex = (index << 1) + 1;
+			leftIndex = (index + index) + 1;
 			rightIndex = leftIndex + 1;
 		}
 	}
 
 	inline function algorithmFloyd() {
-		var n = length >> 1;
+		var n = div2( length );
 		for ( i_ in 0...n ) {
 			siftDown( n - i_ - 1 );
 		}
